@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Nyaswap</title>
+    <link rel="icon" type="image/x-icon" href="./src/favicon.png">
+
+    <style>
+      @font-face {
+        font-family: Montserrat;
+        src: url(./src/montserrat.ttf);
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      ::-webkit-scrollbar {
+        width: 0px;
+      }
+
+      div.qr {
+        width: 180px;
+        height: 180px;
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
+        -ms-flex-align: center;
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+      }
+
+      ::placeholder {
+        color: black !important;
+        opacity: 1; 
+      }
+    </style>
+    <link rel="stylesheet" href="src/bulma/bulma.css">
+    <link rel="stylesheet" href="src/bulma/pageloader.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
+
+    <script src="./src/bulma/toast.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/big.js@6.0.0/big.min.js'></script>
+
+    <script src="./src/qr.min.js"></script>
+    <script src="./src/polyfill/buffer.js"></script>
+     
+    <script src="./src/vite/vite.js"></script>
+    <script src="./src/vite/vite-ws.js"></script>
+    <script src="./src/vite/bifrost.js"></script>
+
+    <script src="./app.js"></script>
+  </head>
+  <body>
+    <div id="loader" class="pageloader is-dark is-active" style="background-color: #10031b;"><span class="title" id="loadingDesc">Nyaswap</span></div>
+
+    <section class="hero is-info is-fullheight" style="background-color: #10031b;">
+      <div style='position: absolute; top: 2%; right: 2%;'>
+        <div id="connectQR" class="qr"></div>
+      </div>
+
+      <div style='position: absolute; top: 2%; left: 2%;'>
+        <p id="contractAddress" class="is-clickable" style="font-family: Montserrat; font-size: small;"></p>
+      </div>
+
+      <div class="hero-body">
+        <div id="swapPage_pairs" class="box" style="z-index: 69; position: absolute; height: 50%; width: 15%;">
+          <p>Pairs</p>
+
+          <div style="overflow: hidden; overflow-y: scroll; height: 120px;">
+            <ul id="swapPage_pairs_page" style="font-family: Montserrat; font-size: small;" class="block-list has-radius is-dark is-small is-left">
+
+            </ul>
+          </div>
+        </div>
+        
+        <div class="container has-text-centered">
+          <img src="./src/logo.png" draggable="false" height="250" width="250">
+          <p class="title" style="font-family: Montserrat;">
+            Nyaswap
+          </p>
+          <p class="subtitle">
+            <center>
+              <div class="columns is-centered">
+                <div class="column is-one-quarter" style="width: 40%">
+                  <div id="swapPage" class="box" style="height: 90%; font-family: Montserrat;">
+                    <div class="field is-horizontal">
+                      <div class="field-body">
+                        <div class="field">
+                          <p class="control">
+                            <input id="swapPage_inputAmount" class="input" type="text" placeholder="Amount (Example: 0.01)">
+                          </p>
+                        </div>
+                      </div>
+                      <div class="field-label is-normal">
+                        <label id="swapPage_inputToken" class="label is-clickable">????</label>
+                      </div>
+                    </div>
+
+                    <div class="field is-horizontal">
+                      <div class="field-body">
+                        <div class="field">
+                          <p class="control">
+                            <input id="swapPage_outputAmount" class="input" type="text" placeholder="Amount you will receive">
+                          </p>
+                        </div>
+                      </div>
+                      <div class="field-label is-normal">
+                        <label id="swapPage_outputToken" class="label is-clickable">????</label>
+                      </div>
+                    </div>
+                    <button id="swapPage_swap" class="button is-dark" style="background-color: #6707ac;">Swap</button>
+                  </div>
+
+                  <div id="liquidityPage" style="display: none;">
+                    <div class="box" style="height: 90%; font-family: Montserrat;">
+                      <div class="field is-horizontal">
+                        <div class="field-body">
+                          <div class="field">
+                            <p class="control">
+                              <input id="lqPage_amountA" class="input" type="text" placeholder="Amount of token">
+                            </p>
+                          </div>
+                        </div>
+                        <div class="field-label is-normal">
+                          <label id="lqPage_tokenA" class="label">????</label>
+                        </div>
+                      </div>
+  
+                      <div class="field is-horizontal">
+                        <div class="field-body">
+                          <div class="field">
+                            <p class="control">
+                              <input id="lqPage_amountB" class="input" type="text" placeholder="Amount of token needed">
+                            </p>
+                          </div>
+                        </div>
+                        <div class="field-label is-normal">
+                          <label id="lqPage_tokenB" class="label">????</label>
+                        </div>
+                      </div>
+  
+                      <button id="lqPage_addLiquidity" class="button is-dark" style="background-color: #6707ac;">Add liquidity</button>
+                    </div>
+
+                    <div class="box" style="font-family: Montserrat;">
+                      <div class="field has-addons">
+                        <label id="lqPage_wrapBalance">????</label>
+                        <input id="lqPage_wrapAmount" class="input" type="text" placeholder="Amount">
+                        <span class="select">
+                          <select id="lqPage_wrapTokens">
+                            <option>????</option>
+                          </select>
+                        </span>
+                      </div>
+                      <div class="field has-addons">
+                        <button id="lqPage_wrapToken" class="button is-dark" style="background-color: #6707ac;">Wrap token</button>
+                        <button id="lqPage_unwrapToken" class="button is-dark" style="background-color: #6707ac;">Unwrap token</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </center>
+          </p>
+        </div>
+      </div>
+    
+      <div class="hero-foot">
+        <nav class="tabs is-boxed is-fullwidth">
+          <div class="container">
+            <ul>
+              <li id="tabs_swapPage" class="is-active"><a>Swap</a></li>
+              <li id="tabs_provideLP"><a>Provide LP</a></li>
+              <li id="tabs_stake"><a>Stake</a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </section>
+    
+  </body>
+</html>
+
