@@ -1,0 +1,307 @@
+// SPDX-License-Identifier: Unlicense
+pragma soliditypp 0.8.0;
+
+interface TokenContract {
+    function Burn() external payable;  
+}
+
+interface ConsensusContract {
+  function VoteForSBP(string calldata sbpName) external;
+  function CancelSBPVoting() external;
+}
+
+contract Nyaswap {
+  event AddLiquidity(address indexed provider, vitetoken indexed tokenAId, uint256 tokenAAmount, vitetoken indexed tokenBId, uint256 tokenBAmount);
+  event RemoveLiquidity(address indexed provider, vitetoken indexed tokenAId, uint256 tokenAAmount, vitetoken indexed tokenBId, uint256 tokenBAmount);
+  event Deposit(address indexed provider, vitetoken indexed tokenid, uint256 amount);
+  event Withdrawal(address indexed provider, vitetoken indexed tokenid, uint256 amount);
+  event Swap(address indexed destination, vitetoken indexed tokenSold, uint256 amountSold, vitetoken indexed tokenBought, uint256 amountBought);
+
+  struct Pair {
+    bool initialized;
+
+    vitetoken tokenA;
+    vitetoken tokenB;
+
+    uint256 supplyA;
+    uint256 supplyB;
+
+    uint256 totalPoolSupply;
+    mapping(address => uint256) poolBalances;
+  }
+
+  struct PairFlag { vitetoken tokenA; vitetoken tokenB; }
+
+  TokenContract tokenContract = TokenContract("vite_000000000000000000000000000000000000000595292d996d");
+  ConsensusContract consensusContract = ConsensusContract("vite_0000000000000000000000000000000000000004d28108e76b");
+
+  vitetoken constant Nyani = "tti_14559f510fa839880af467d1";
+  vitetoken constant Vite = "tti_5649544520544f4b454e6e40";
+
+  mapping(vitetoken => mapping(vitetoken => Pair)) pairs;
+  PairFlag[] pairFlags;
+  
+  mapping(address => mapping(vitetoken => uint256)) holdingPool;
+
+  address public daoOwner;
+  address public daoPaymentAddr;
+
+  constructor() {
+    daoOwner = msg.sender;
+  }
+
+  function createPair(vitetoken _tokenAIn, vitetoken _tokenBIn) payable public {
+    require(msg.token == Nyani && msg.value == 100000 * 1e18);
+
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(_tokenAIn, _tokenBIn);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+    require(!_pair.initialized);
+
+    _pair.initialized = true;
+    _pair.tokenA = _tokenA;
+    _pair.tokenB = _tokenB;
+    
+    pairFlags.push(PairFlag({
+      tokenA: _tokenA, 
+      tokenB: _tokenB}
+    ));
+
+    tokenContract.Burn{value: 100000 * 1e18, token: msg.token}();
+  }
+
+  function getPairCount() public view returns (uint256) {
+    return pairFlags.length;
+  }
+
+  function getPairAtIndex(uint256 _index) public view returns (vitetoken, vitetoken) {
+    PairFlag storage _pairFlag = pairFlags[_index];
+    return (_pairFlag.tokenA, _pairFlag.tokenB);
+  }
+
+  function getPairSupply(vitetoken _tokenAIn, vitetoken _tokenBIn) public view returns (uint256, uint256) {
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(_tokenAIn, _tokenBIn);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+
+    if (_pair.tokenA == _tokenAIn) {
+      return (_pair.supplyA, _pair.supplyB);
+    } else {
+      return (_pair.supplyB, _pair.supplyA);
+    }
+  }
+
+  function canonicalizePair(vitetoken _tokenA, vitetoken _tokenB) private pure returns (vitetoken, vitetoken) {
+    require(_tokenA != _tokenB);
+    
+    if (_tokenA == Vite) {
+      return (_tokenB, _tokenA);
+    } else if (_tokenB == Vite) {
+      return (_tokenA, _tokenB);
+    } else if (_tokenA < _tokenB) {
+      return (_tokenA, _tokenB);
+    } else {
+      return (_tokenB, _tokenA);
+    }
+  }
+
+  function wrap() public payable {
+    require(msg.value > 0);
+    holdingPool[msg.sender][msg.token] += msg.value;
+    emit Deposit(msg.sender, msg.token, msg.value);
+  }
+
+  function getWrapBalance(address _address, vitetoken _token) public view returns (uint256) {
+    return holdingPool[_address][_token];
+  }
+
+  function unwrap(vitetoken _token, uint256 _amount) public {
+    uint256 _senderBalance = holdingPool[msg.sender][_token];
+    require(_amount <= _senderBalance);
+    holdingPool[msg.sender][_token] -= _amount;
+    payable(msg.sender).transfer(_token, _amount);
+    emit Withdrawal(msg.sender, _token, _amount);
+  }
+
+  function addLiquidity(vitetoken _tokenAIn, uint256 _amountTokenA, vitetoken _tokenBIn, uint256 _maxTokenB, uint256 _deadline) public {
+    require(accountheight() <= _deadline);
+    require(_amountTokenA > 0);
+    require(_maxTokenB > 0);
+
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(_tokenAIn, _tokenBIn);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+    require(_pair.initialized);
+
+    uint256 amountTokenB;
+    uint256 liquidityAdded;
+
+    uint256 supplyA = _pair.tokenA == _tokenAIn ? _pair.supplyA : _pair.supplyB;
+    uint256 supplyB = _pair.tokenA == _tokenAIn ? _pair.supplyB : _pair.supplyA;
+
+    if (_pair.totalPoolSupply > 0) {
+      amountTokenB = _amountTokenA * supplyB / supplyA + 1;
+      require(amountTokenB <= _maxTokenB);
+      if (_pair.tokenA == _tokenAIn) {
+        liquidityAdded = _amountTokenA * _pair.totalPoolSupply / supplyA;
+      } else {
+        liquidityAdded = amountTokenB * _pair.totalPoolSupply / supplyB;
+      }
+    } else {
+      amountTokenB = min(_maxTokenB, holdingPool[msg.sender][_tokenBIn]);
+      require(_amountTokenA > 0 && amountTokenB > 0);
+      if (_pair.tokenA == _tokenAIn) {
+        liquidityAdded = _amountTokenA;
+      } else {
+        liquidityAdded = amountTokenB;
+      }
+    }
+
+    require(_amountTokenA <= holdingPool[msg.sender][_tokenAIn]);
+    require(amountTokenB <= holdingPool[msg.sender][_tokenBIn]);
+    holdingPool[msg.sender][_tokenAIn] -= _amountTokenA;
+    holdingPool[msg.sender][_tokenBIn] -= amountTokenB;
+
+    _pair.poolBalances[msg.sender] += liquidityAdded;
+    _pair.totalPoolSupply += liquidityAdded;
+
+    if (_pair.tokenA == _tokenAIn) {
+      _pair.supplyA += _amountTokenA;
+      _pair.supplyB += amountTokenB;
+    } else {
+      _pair.supplyA += amountTokenB;
+      _pair.supplyB += _amountTokenA;
+    }
+
+    emit AddLiquidity(msg.sender, _tokenAIn, _amountTokenA, _tokenBIn, amountTokenB);
+  }
+
+  function getLiquidityPoolBalance(address _address, vitetoken _tokenAIn, vitetoken _tokenBIn) public view returns (uint256) {
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(_tokenAIn, _tokenBIn);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+    return _pair.poolBalances[_address];
+  }
+
+  function removeLiquidity(uint256 _amount, vitetoken _tokenAIn, uint256 _minTokenA, vitetoken _tokenBIn, uint256 _minTokenB, uint256 _deadline) public {
+    require(accountheight() <= _deadline);
+
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(_tokenAIn, _tokenBIn);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+    require(_pair.initialized);
+    require(_amount <= _pair.totalPoolSupply);
+
+    uint256 supplyA = _pair.tokenA == _tokenAIn ? _pair.supplyA : _pair.supplyB;
+    uint256 supplyB = _pair.tokenA == _tokenAIn ? _pair.supplyB : _pair.supplyA;
+
+    uint256 amountTokenA = _amount * supplyA / _pair.totalPoolSupply;
+    uint256 amountTokenB = _amount * supplyB / _pair.totalPoolSupply;
+    require(amountTokenA >= _minTokenA);
+    require(amountTokenB >= _minTokenB);
+
+    require(_pair.poolBalances[msg.sender] >= _amount);
+    _pair.poolBalances[msg.sender] -= _amount;
+    _pair.totalPoolSupply -= _amount;
+    if (_pair.tokenA == _tokenAIn) {
+      _pair.supplyA -= amountTokenA;
+      _pair.supplyB -= amountTokenB;
+    } else {
+      _pair.supplyA -= amountTokenB;
+      _pair.supplyB -= amountTokenA;
+    }
+
+    payable(msg.sender).transfer(_tokenAIn, amountTokenA);
+    payable(msg.sender).transfer(_tokenBIn, amountTokenB);
+
+    emit RemoveLiquidity(
+      msg.sender,
+      _tokenAIn,
+      amountTokenA,
+      _tokenBIn,
+      amountTokenB
+    );
+  }
+
+  function getRate(vitetoken _vitetokenIn, uint256 _amountIn, vitetoken _vitetokenOut) public view returns (uint256) {
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(_vitetokenIn, _vitetokenOut);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+    
+    uint256 _inputSupply = _vitetokenIn == _pair.tokenA ? _pair.supplyA : _pair.supplyB;
+    uint256 _outputSupply = _vitetokenIn == _pair.tokenA ? _pair.supplyB : _pair.supplyA;
+    return getInputPrice(_amountIn, _inputSupply, _outputSupply);
+  }
+
+  function getInputPrice(uint256 input_amount, uint256 input_reserve, uint256 output_reserve) private pure returns (uint256) {
+    uint256 input_amount_with_fee = input_amount * 997;
+    uint256 numerator = input_amount_with_fee * output_reserve;
+    uint256 denominator = (input_reserve * 1000) + input_amount_with_fee;
+    return numerator / denominator;
+  }
+
+  function swap(vitetoken _outputTokenId, uint256 _minOutput, uint256 _deadline) public payable {
+    require(accountheight() <= _deadline);
+    (vitetoken _tokenA, vitetoken _tokenB) = canonicalizePair(msg.token, _outputTokenId);
+    Pair storage _pair = pairs[_tokenA][_tokenB];
+    require(_pair.initialized);
+    require(_pair.totalPoolSupply > 0);
+
+    uint256 supplyA = _pair.tokenA == msg.token ? _pair.supplyA : _pair.supplyB;
+    uint256 supplyB = _pair.tokenA == msg.token ? _pair.supplyB : _pair.supplyA;
+
+    uint256 tokenBBought = getInputPrice(msg.value, supplyA, supplyB);
+    require(tokenBBought <= supplyB);
+    require(tokenBBought >= _minOutput);
+
+    if (_pair.tokenA == msg.token) {
+      _pair.supplyA += msg.value;
+      _pair.supplyB -= tokenBBought;
+    } else {
+      _pair.supplyA -= tokenBBought;
+      _pair.supplyB += msg.value;
+    }
+
+    payable(msg.sender).transfer(_outputTokenId, tokenBBought);
+
+    emit Swap(
+      msg.sender,
+      msg.token,
+      msg.value,
+      _outputTokenId,
+      tokenBBought
+    );
+  }
+
+  function changeDaoOwner(address _newOwner) public {
+    require(msg.sender == daoOwner && _newOwner != daoOwner);
+
+    daoOwner = _newOwner;
+  }
+
+  function changeVote(string calldata _sbpName) public {
+    require(msg.sender == daoOwner);
+
+    consensusContract.VoteForSBP(_sbpName);
+  }
+
+  function changeDaoPaymentAddr(address _daoPaymentAddr) public {
+    require(msg.sender == daoOwner);
+
+    daoPaymentAddr = _daoPaymentAddr;
+  }
+
+  receive() external payable {
+    require(msg.sender == daoPaymentAddr);
+
+    payable(daoOwner).transfer(msg.token, msg.value);
+  }
+
+  function revokeVote() public {
+    require(msg.sender == daoOwner);
+
+    consensusContract.CancelSBPVoting();
+  }
+  
+  function max(uint256 _a, uint256 _b) private pure returns (uint256) {
+    return _a >= _b ? _a : _b;
+  }
+
+  function min(uint256 _a, uint256 _b) private pure returns (uint256) {
+    return _a < _b ? _a : _b;
+  }
+}

@@ -33,11 +33,12 @@
       }
 
       ::placeholder {
-        color: black !important;
+        color: white !important;
         opacity: 1; 
       }
     </style>
     <link rel="stylesheet" href="src/bulma/bulma.css">
+    <link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet" href="src/bulma/pageloader.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
 
@@ -111,7 +112,7 @@
                         <label id="swapPage_outputToken" class="label is-clickable">????</label>
                       </div>
                     </div>
-                    <button id="swapPage_swap" class="button is-dark" style="background-color: #6707ac;">Swap</button>
+                    <button id="swapPage_swap" class="button is-dark" style="background-color: #2F0C49;">Swap</button>
                   </div>
 
                   <div id="liquidityPage" style="display: none;">
@@ -142,12 +143,11 @@
                         </div>
                       </div>
   
-                      <button id="lqPage_addLiquidity" class="button is-dark" style="background-color: #6707ac;">Add liquidity</button>
+                      <button id="lqPage_addLiquidity" class="button is-dark" style="background-color: #2F0C49;">Add liquidity</button>
                     </div>
 
                     <div class="box" style="font-family: Montserrat;">
                       <div class="field has-addons">
-                        <label id="lqPage_wrapBalance">????</label>
                         <input id="lqPage_wrapAmount" class="input" type="text" placeholder="Amount">
                         <span class="select">
                           <select id="lqPage_wrapTokens">
@@ -156,8 +156,11 @@
                         </span>
                       </div>
                       <div class="field has-addons">
-                        <button id="lqPage_wrapToken" class="button is-dark" style="background-color: #6707ac;">Wrap token</button>
-                        <button id="lqPage_unwrapToken" class="button is-dark" style="background-color: #6707ac;">Unwrap token</button>
+                        <button id="lqPage_wrapToken" class="button is-dark" style="background-color: #2F0C49;">Wrap token</button>
+                        <button id="lqPage_unwrapToken" class="button is-dark" style="background-color: #2F0C49;">Unwrap token</button>
+                        <div class="field-label is-normal">
+                          <span id="lqPage_wrapBalance" class="tag is-link is-clickable">????</span>
+                        </div>
                       </div>
                     </div>
                   </div>
