@@ -52,7 +52,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
 
     document.getElementById('swapPage_pairs_page').innerHTML += `
       <li id="${i}" class="is-clickable is-unselectable" style="background-color: #2F0C49 !important;">
-        <span>${pairTokens[0].tokenSymbol}-${pairTokens[0].index} ${pairTokens[1].tokenSymbol}-${pairTokens[1].index}</span>
+        <span>${pairTokens[0].tokenSymbol}-${"0".repeat(3 - pairTokens[0].index.toString().length) + pairTokens[0].index} ${pairTokens[1].tokenSymbol}-${"0".repeat(3 - pairTokens[1].index.toString().length) + pairTokens[1].index}</span>
       </li>`
   }
 
@@ -126,7 +126,6 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
       }
 
       // Provide LQ
-
       document.getElementById('lqPage_tokenA').innerHTML = pairTokens[0]['tokenSymbol']
       document.getElementById('lqPage_tokenB').innerHTML = pairTokens[1]['tokenSymbol']
 
@@ -155,7 +154,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           methodName: "addLiquidity",
           params: [ pairTokens[0]["tokenId"], 
                     Big(document.getElementById("lqPage_amountA").value).times(`1e${pairTokens[0]["decimals"]}`).toFixed(),
-                    pairTokens[0]["tokenId"],
+                    pairTokens[1]["tokenId"],
                     Big(document.getElementById("lqPage_amountB").value).times(`1e${pairTokens[1]["decimals"]}`).plus("1").toFixed(),
                     await api.nya.getNextContractHeight() ]
         }).accountBlock
