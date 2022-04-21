@@ -236,7 +236,7 @@ api.nya = {
   getNextContractHeight: async () => {
     const accountInfo = await api.request('ledger_getAccountInfoByAddress', contractAddress)
 
-    return BigInt(accountInfo.blockCount) + BigInt("1")
+    return (parseInt(accountInfo.blockCount) + 1).toString()
   },
 
   request: async (method, args) => {
