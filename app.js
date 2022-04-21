@@ -112,7 +112,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           abi: abi,
           toAddress: contractAddress,
           methodName: "swap",
-          params: [ pairTokens[1]["tokenId"], Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).toFixed(), await api.nya.getNextContractHeight() ],
+          params: [ pairTokens[1]["tokenId"], Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).minus('1').toFixed(), await api.nya.getNextContractHeight() ],
           tokenId: pairTokens[0]['tokenId'],
           amount: Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).toFixed()
         }).accountBlock
