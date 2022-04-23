@@ -89,18 +89,11 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
         document.getElementById('swapPage_outputAmount').value = ''
       }
 
-      document.getElementById('swapPage_inputAmount').oninput = async () => {
+      document.getElementById('swapPage_inputAmount').oninput = document.getElementById('swapPage_outputAmount').oninput = async () => {
         if (document.getElementById('swapPage_inputAmount').value === "") return document.getElementById('swapPage_outputAmount').value = ""
         const rate = await api.nya.request('getRate', [ pairTokens[0]['tokenId'], Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).toFixed(), pairTokens[1]['tokenId'] ])
         
         document.getElementById('swapPage_outputAmount').value = `${Big(rate).div(`1e${pairTokens[1]['decimals']}`).toFixed(8)}`
-      }
-
-      document.getElementById('swapPage_outputAmount').oninput = async () => {
-        if (document.getElementById('swapPage_outputAmount').value === "") return document.getElementById('swapPage_inputAmount').value = ""
-        const rate = await api.nya.request('getRate', [ pairTokens[1]['tokenId'], Big(document.getElementById('swapPage_outputAmount').value).times(`1e${pairTokens[1]['decimals']}`).toFixed(), pairTokens[0]['tokenId'] ])
-
-        document.getElementById('swapPage_inputAmount').value = `${Big(rate).div(`1e${pairTokens[0]['decimals']}`).toFixed(8)}`
       }
 
       document.getElementById('swapPage_swap').onclick = async () => {
@@ -112,7 +105,9 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           abi: abi,
           toAddress: contractAddress,
           methodName: "swap",
-          params: [ pairTokens[1]["tokenId"], Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).minus('1').toFixed(), await api.nya.getNextContractHeight() ],
+          params: [ pairTokens[1]["tokenId"],
+                    Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).minus(`100`).times(100-parseInt(document.getElementById('swapPage_slippage').value)).toFixed(),
+                    await api.nya.getNextContractHeight() ],
           tokenId: pairTokens[0]['tokenId'],
           amount: Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).toFixed()
         }).accountBlock
@@ -129,18 +124,11 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
       document.getElementById('lqPage_tokenA').innerHTML = pairTokens[0]['tokenSymbol']
       document.getElementById('lqPage_tokenB').innerHTML = pairTokens[1]['tokenSymbol']
 
-      document.getElementById('lqPage_amountA').oninput = async () => {
+      document.getElementById('lqPage_amountA').oninput = document.getElementById('lqPage_amountB').oninput = async () => {
         if (document.getElementById('lqPage_amountA').value === "") return document.getElementById('lqPage_amountA').value = ""
         const rate = await api.nya.request('getRate', [ pairTokens[0]['tokenId'], Big(document.getElementById('lqPage_amountA').value).times(`1e${pairTokens[0]['decimals']}`).toFixed(), pairTokens[1]['tokenId'] ])
         
         document.getElementById('lqPage_amountB').value = `${Big(rate).div(`1e${pairTokens[1]['decimals']}`).toFixed()}`
-      }
-
-      document.getElementById('lqPage_amountB').oninput = async () => {
-        if (document.getElementById('lqPage_amountB').value === "") return document.getElementById('lqPage_amountB').value = ""
-        const rate = await api.nya.request('getRate', [ pairTokens[1]['tokenId'], Big(document.getElementById('lqPage_amountB').value).times(`1e${pairTokens[1]['decimals']}`).toFixed(), pairTokens[0]['tokenId'] ])
-
-        document.getElementById('lqPage_amountA').value = `${Big(rate).div(`1e${pairTokens[0]['decimals']}`).toFixed()}`
       }
 
       document.getElementById('lqPage_addLiquidity').onclick = async () => {
@@ -182,7 +170,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
 
         const balance = await api.nya.request('getWrapBalance', [ viteConnect.connectedAddress, document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("tokenid") ])
         
-        document.getElementById('lqPage_wrapBalance').innerHTML = `Selected balance: ${Big(balance).div(`1e${document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("decimals")}`).toFixed()}`
+        document.getElementById('lqPage_wrapBalance').innerHTML = `${Big(balance).div(`1e${document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("decimals")}`).toFixed()}`
       }
 
       document.getElementById('lqPage_wrapToken').onclick = async () => {
@@ -215,7 +203,8 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           abi: abi,
           toAddress: contractAddress,
           methodName: "unwrap",
-          params: [ document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("tokenid"), Big(document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).value).times(`1e${document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("decimals")}`).toFixed() ],
+          params: [ document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("tokenid"),
+                    Big(document.getElementById('lqPage_wrapAmount').value).times(`1e${document.getElementById("lqPage_wrapTokens_" + document.getElementById("lqPage_wrapTokens").options[document.getElementById("lqPage_wrapTokens").selectedIndex].innerHTML).getAttribute("decimals")}`).toFixed() ],
         }).accountBlock
 
         viteConnect.requestExecute(block).then(() => {

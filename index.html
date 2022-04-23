@@ -38,11 +38,13 @@
       }
     </style>
     <link rel="stylesheet" href="src/bulma/bulma.css">
-    <link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet" href="src/bulma/pageloader.css">
+    <link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <script src="./src/bulma/toast.js"></script>
+    <script src='https://unpkg.com/bulma-slider'></script>
     <script src='https://cdn.jsdelivr.net/npm/big.js@6.0.0/big.min.js'></script>
 
     <script src="./src/qr.min.js"></script>
@@ -52,7 +54,7 @@
     <script src="./src/vite/vite-ws.js"></script>
     <script src="./src/vite/bifrost.js"></script>
 
-    <script src="./app.js?v3"></script>
+    <script src="./app.js?v4"></script>
   </head>
   <body>
     <div id="loader" class="pageloader is-dark is-active" style="background-color: #10031b;"><span class="title" id="loadingDesc">Nyaswap</span></div>
@@ -78,7 +80,7 @@
         </div>
         
         <div class="container has-text-centered">
-          <img src="./src/logo.png" draggable="false" height="250" width="250">
+          <img src="./src/logo.png" draggable="false" height="230" width="230">
           <p class="title" style="font-family: Montserrat;">
             Nyaswap
           </p>
@@ -86,11 +88,14 @@
             <center>
               <div class="columns is-centered">
                 <div class="column is-one-quarter" style="width: 40%">
-                  <div id="swapPage" class="box" style="height: 90%; font-family: Montserrat;">
+                  <div id="swapPage" class="box" style="height: 87%; font-family: Montserrat;">
                     <div class="field is-horizontal">
                       <div class="field-body">
                         <div class="field">
-                          <p class="control">
+                          <p class="control has-icons-left">
+                            <span class="icon is-small is-left">
+                              <i class="fa fa-chevron-right"></i>
+                            </span>
                             <input id="swapPage_inputAmount" class="input" type="text" placeholder="Amount (Example: 0.01)">
                           </p>
                         </div>
@@ -103,8 +108,11 @@
                     <div class="field is-horizontal">
                       <div class="field-body">
                         <div class="field">
-                          <p class="control">
-                            <input id="swapPage_outputAmount" class="input" type="text" placeholder="Amount you will receive">
+                          <p class="control has-icons-left">
+                            <span class="icon is-small is-left">
+                              <i class="fa fa-chevron-left"></i>
+                            </span>
+                            <input id="swapPage_outputAmount" class="input" type="text" placeholder="Amount you will receive~">
                           </p>
                         </div>
                       </div>
@@ -112,6 +120,15 @@
                         <label id="swapPage_outputToken" class="label is-clickable">????</label>
                       </div>
                     </div>
+                    <p class="control">
+                      <span>Slippage</span>
+                      <input id="swapPage_slippage" class="slider has-output is-small is-fullwidth" style="vertical-align: middle;" min="0" max="100" value="5" step="1" type="range">
+                      <output for="swapPage_slippage">5</output>
+
+                      <script>
+                        bulmaSlider.attach()
+                      </script>
+                    </p>
                     <button id="swapPage_swap" class="button is-dark" style="background-color: #2F0C49;">Swap</button>
                   </div>
 
@@ -159,7 +176,8 @@
                         <button id="lqPage_wrapToken" class="button is-dark" style="background-color: #2F0C49;">Wrap token</button>
                         <button id="lqPage_unwrapToken" class="button is-dark" style="background-color: #2F0C49;">Unwrap token</button>
                         <div class="field-label is-normal">
-                          <span id="lqPage_wrapBalance" class="tag is-link is-clickable">????</span>
+                          <span>Balance:</span>
+                          <span id="lqPage_wrapBalance" class="tag is-link is-clickable" style="background-color: #2F0C49;">????</span>
                         </div>
                       </div>
                     </div>
