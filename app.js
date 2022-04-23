@@ -106,7 +106,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           toAddress: contractAddress,
           methodName: "swap",
           params: [ pairTokens[1]["tokenId"],
-                    Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).minus(`100`).times(100-parseInt(document.getElementById('swapPage_slippage').value)).toFixed(),
+                    Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).div(`100`).times(100 - parseInt(document.getElementById('swapPage_slippage').value)).toFixed(),
                     await api.nya.getNextContractHeight() ],
           tokenId: pairTokens[0]['tokenId'],
           amount: Big(document.getElementById('swapPage_inputAmount').value).times(`1e${pairTokens[0]['decimals']}`).toFixed()
@@ -143,7 +143,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           params: [ pairTokens[0]["tokenId"], 
                     Big(document.getElementById("lqPage_amountA").value).times(`1e${pairTokens[0]["decimals"]}`).toFixed(),
                     pairTokens[1]["tokenId"],
-                    Big(document.getElementById("lqPage_amountB").value).times(`1e${pairTokens[1]["decimals"]}`).plus("1").toFixed(),
+                    Big(document.getElementById("lqPage_amountB").value).times(`1e${pairTokens[1]["decimals"]}`).div("100").times(100 + parseInt(document.getElementById('lqPage_slippage').value)).toFixed(),
                     await api.nya.getNextContractHeight() ]
         }).accountBlock
 

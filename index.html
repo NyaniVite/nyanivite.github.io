@@ -88,7 +88,7 @@
             <center>
               <div class="columns is-centered">
                 <div class="column is-one-quarter" style="width: 40%">
-                  <div id="swapPage" class="box" style="height: 87%; font-family: Montserrat;">
+                  <div id="swapPage" class="box" style="height: 90%; font-family: Montserrat;">
                     <div class="field is-horizontal">
                       <div class="field-body">
                         <div class="field">
@@ -137,8 +137,11 @@
                       <div class="field is-horizontal">
                         <div class="field-body">
                           <div class="field">
-                            <p class="control">
-                              <input id="lqPage_amountA" class="input" type="text" placeholder="Amount of token">
+                            <p class="control has-icons-left">
+                              <span class="icon is-small is-left">
+                                <i class="fa fa-chevron-right"></i>
+                              </span>
+                              <input id="lqPage_amountA" class="input" type="text" placeholder="Amount (Example: 0.01)">
                             </p>
                           </div>
                         </div>
@@ -150,8 +153,11 @@
                       <div class="field is-horizontal">
                         <div class="field-body">
                           <div class="field">
-                            <p class="control">
-                              <input id="lqPage_amountB" class="input" type="text" placeholder="Amount of token needed">
+                            <p class="control has-icons-left">
+                              <span class="icon is-small is-left">
+                                <i class="fa fa-chevron-right"></i>
+                              </span>
+                              <input id="lqPage_amountB" class="input" type="text" placeholder="Amount of needed rate~">
                             </p>
                           </div>
                         </div>
@@ -160,6 +166,16 @@
                         </div>
                       </div>
   
+                      <p class="control">
+                        <span>Slippage</span>
+                        <input id="lqPage_slippage" class="slider has-output is-small is-fullwidth" style="vertical-align: middle;" min="0" max="100" value="5" step="1" type="range">
+                        <output for="lqPage_slippage">5</output>
+  
+                        <script>
+                          bulmaSlider.attach()
+                        </script>
+                      </p>
+
                       <button id="lqPage_addLiquidity" class="button is-dark" style="background-color: #2F0C49;">Add liquidity</button>
                     </div>
 
