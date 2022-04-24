@@ -160,7 +160,7 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
           params: [ pairTokens[0]["tokenId"], 
                     Big(document.getElementById("lqPage_amountA").value).times(`1e${pairTokens[0]["decimals"]}`).toFixed(),
                     pairTokens[1]["tokenId"],
-                    Big(document.getElementById("lqPage_amountB").value).times(`1e${pairTokens[1]["decimals"]}`).div("100").times(100 + parseInt(document.getElementById('lqPage_slippage').value)).toFixed(),
+                    Big(document.getElementById("lqPage_amountB").value).times(`1e${pairTokens[1]["decimals"]}`).plus("1").toFixed(),
                     await api.nya.getNextContractHeight() ]
         }).accountBlock
 
@@ -173,7 +173,6 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
       }
 
       // Wrap Token
-
       document.getElementById('lqPage_wrapTokens').innerHTML = ``
 
       pairTokens.forEach(pairToken => {
