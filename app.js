@@ -84,6 +84,8 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
         
         document.getElementById('swapPage_inputToken').innerHTML = pairTokens[0]['tokenSymbol']
         document.getElementById('swapPage_outputToken').innerHTML = pairTokens[1]['tokenSymbol']
+        document.getElementById('lqPage_tokenA').innerHTML = pairTokens[0]['tokenSymbol']
+        document.getElementById('lqPage_tokenB').innerHTML = pairTokens[1]['tokenSymbol']
 
         document.getElementById('swapPage_inputAmount').value = ''
         document.getElementById('swapPage_outputAmount').value = ''
@@ -124,11 +126,26 @@ const api = new $vite_vitejs.ViteAPI(wsProvider, async () => {
       document.getElementById('lqPage_tokenA').innerHTML = pairTokens[0]['tokenSymbol']
       document.getElementById('lqPage_tokenB').innerHTML = pairTokens[1]['tokenSymbol']
 
-      document.getElementById('lqPage_amountA').oninput = document.getElementById('lqPage_amountB').oninput = async () => {
-        if (document.getElementById('lqPage_amountA').value === "") return document.getElementById('lqPage_amountA').value = ""
-        const rate = await api.nya.request('getRate', [ pairTokens[0]['tokenId'], Big(document.getElementById('lqPage_amountA').value).times(`1e${pairTokens[0]['decimals']}`).toFixed(), pairTokens[1]['tokenId'] ])
+      document.getElementById('lqPage_amountA').oninput = async () => {
+        if (document.getElementById('lqPage_amountA').value === "") return document.getElementById('lqPage_amountB').value = ""
+        const lqBalance = await api.nya.request('getPairSupply', [ pairTokens[1]['tokenId'], pairTokens[0]['tokenId'] ])
+
+        const ratePercentage = Big(lqBalance[0]).div(lqBalance[1]).times("100")
+        const inputLq = Big(document.getElementById('lqPage_amountA').value).times(`1e${pairTokens[0]['decimals']}`)
+        const inputLq2 = inputLq.div(`100`).times(ratePercentage)
         
-        document.getElementById('lqPage_amountB').value = `${Big(rate).div(`1e${pairTokens[1]['decimals']}`).toFixed()}`
+        document.getElementById('lqPage_amountB').value = `${inputLq2.div(`1e${pairTokens[1]['decimals']}`).toFixed()}`
+      }
+
+      document.getElementById('lqPage_amountB').oninput = async () => {
+        if (document.getElementById('lqPage_amountB').value === "") return document.getElementById('lqPage_amountA').value = ""
+        const lqBalance = await api.nya.request('getPairSupply', [ pairTokens[0]['tokenId'], pairTokens[1]['tokenId'] ])
+
+        const ratePercentage = Big(lqBalance[0]).div(lqBalance[1]).times("100")
+        const inputLq = Big(document.getElementById('lqPage_amountB').value).times(`1e${pairTokens[1]['decimals']}`)
+        const inputLq2 = inputLq.div(`100`).times(ratePercentage)
+        
+        document.getElementById('lqPage_amountA').value = `${inputLq2.div(`1e${pairTokens[0]['decimals']}`).toFixed()}`
       }
 
       document.getElementById('lqPage_addLiquidity').onclick = async () => {
